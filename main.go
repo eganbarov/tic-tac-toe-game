@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -24,8 +25,9 @@ func main() {
 	var player string
 	var isGameFineshed bool = false
 
+	fmt.Println("Player 1: X; Player 2: O")
+
 	for !isGameFineshed {
-		fmt.Println("Player 1: X; Player 2: O")
 		drawBoard(&board)
 
 		fmt.Println("Input row, column and value:")
@@ -35,33 +37,25 @@ func main() {
 			continue
 		}
 
-		if row < 0 || row > 2 {
-			fmt.Println("Row can be from 0 to 2, choose value from correct range")
+		err = checkInputParams(row, column, player)
+		if err != nil {
+			fmt.Println("Error:", err)
 			continue
 		}
 
-		if column < 0 || column > 2 {
-			fmt.Println("Column can be from 0 to 2, choose value from correct range")
+		err = checkCurrentMove(playerMap, player, moveState)
+		if err != nil {
+			fmt.Println("Error:", err)
 			continue
 		}
 
-		if player != "X" && player != "O" {
-			fmt.Println("Value can be from X or O, choose the correct one")
+		err = checkCell(&board, row, column)
+		if err != nil {
+			fmt.Println("Error:", err)
 			continue
 		}
 
 		currentPlayer := playerMap[player]
-		if moveState == MoveState(currentPlayer) {
-			fmt.Println("Now it's not your move")
-			continue
-		}
-
-		cell := board[row][column]
-		if cell != 0 {
-			fmt.Printf("This cell has already used by player: %d\n", cell)
-			continue
-		}
-
 		board[row][column] = currentPlayer
 		moveState = MoveState(currentPlayer)
 
@@ -72,6 +66,22 @@ func main() {
 	}
 
 	fmt.Println("Congrats, the game is finished, launch a new one!")
+}
+
+func checkInputParams(row, column int, player string) error {
+	if row < 0 || row > 2 {
+		return errors.New("Row can be from 0 to 2, choose value from correct range")
+	}
+
+	if column < 0 || column > 2 {
+		return errors.New("Column can be from 0 to 2, choose value from correct range")
+	}
+
+	if player != "X" && player != "O" {
+		return errors.New("Value can be from X or O, choose the correct one")
+	}
+
+	return nil
 }
 
 func drawBoard(b *Board) {
@@ -96,6 +106,23 @@ func drawBoard(b *Board) {
 		}
 	}
 	fmt.Println("")
+}
+
+func checkCurrentMove(playerMap Player, player string, moveState MoveState) error {
+	currentPlayer := playerMap[player]
+	if moveState == MoveState(currentPlayer) {
+		return errors.New("Now it's not your move")
+	}
+
+	return nil
+}
+
+func checkCell(b *Board, row, column int) error {
+	if (*b)[row][column] != 0 {
+		return errors.New("This cell has already used")
+	}
+
+	return nil
 }
 
 func checkWin(b *Board) bool {
